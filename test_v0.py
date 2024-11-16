@@ -12,10 +12,10 @@ from tensorflow.keras.models import Sequential
 import pathlib
 
 # Set your images directories
-# train_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
-# validation_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
-train_data_dir = pathlib.Path("./resized_archive_light/Training Data/Training Data")
-validation_data_dir = pathlib.Path("./resized_archive_light/Validation Data/Validation Data")
+train_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive\Training Data\Training Data")
+validation_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive\Validation Data\Validation Data")
+# train_data_dir = pathlib.Path("./resized_archive_light/Training Data/Training Data")
+# validation_data_dir = pathlib.Path("./resized_archive_light/Validation Data/Validation Data")
 
 # List all image files with .jpg, .jpeg, or .png extensions
 train_image_files = list(train_data_dir.glob('*/*.jpg')) + list(train_data_dir.glob('*/*.jpeg')) + list(train_data_dir.glob('*/*.png'))
@@ -30,11 +30,14 @@ images_width = 64
 # PIL.Image.open(str(cats[0]))
 # print(cats[0])
 
+batch_size = 32
+
 # Creating training dataset
 train_ds = tf.keras.utils.image_dataset_from_directory(
     train_data_dir,
     color_mode='rgb',
-    batch_size=train_image_count,
+    # batch_size=train_image_count,
+    batch_size=batch_size,
     image_size=(images_height, images_width),
     shuffle=True,
     seed=None,
@@ -46,7 +49,8 @@ train_ds = tf.keras.utils.image_dataset_from_directory(
 validation_ds = tf.keras.utils.image_dataset_from_directory(
     validation_data_dir,
     color_mode='rgb',
-    batch_size=train_image_count,
+    # batch_size=train_image_count,
+    batch_size=batch_size,
     image_size=(images_height, images_width),
     shuffle=True,
     seed=None,
@@ -60,8 +64,12 @@ print(class_names)
 
 # Configuring dataset for performance
 AUTOTUNE = tf.data.AUTOTUNE
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-validation_ds = validation_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+train_ds = train_ds.prefetch(buffer_size=AUTOTUNE)
+validation_ds = validation_ds.prefetch(buffer_size=AUTOTUNE)
+
+# train_ds = train_ds.batch(batch_size).cache(r"L:\big_file_storage\4TCA_S1_TIP\cache\train.cache").shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+# validation_ds = validation_ds.batch(batch_size).cache(r"L:\big_file_storage\4TCA_S1_TIP\cache\valid.cache").prefetch(buffer_size=AUTOTUNE)
 
 # Creating the model
 num_classes = len(class_names) # number of classes
@@ -88,7 +96,7 @@ model.compile(optimizer='adam',
 
 
 # Model training
-epochs=100
+epochs=10
 history = model.fit(
   train_ds,
   validation_data=validation_ds,
