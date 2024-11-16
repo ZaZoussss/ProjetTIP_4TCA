@@ -12,8 +12,10 @@ from tensorflow.keras.models import Sequential
 import pathlib
 
 # Set your images directories
-train_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
-validation_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
+# train_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
+# validation_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive_light\Training Data\Training Data")
+train_data_dir = pathlib.Path("./resized_archive_light/Training Data/Training Data")
+validation_data_dir = pathlib.Path("./resized_archive_light/Validation Data/Validation Data")
 
 # List all image files with .jpg, .jpeg, or .png extensions
 train_image_files = list(train_data_dir.glob('*/*.jpg')) + list(train_data_dir.glob('*/*.jpeg')) + list(train_data_dir.glob('*/*.png'))
