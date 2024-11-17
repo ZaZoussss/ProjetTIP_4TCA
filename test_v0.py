@@ -134,7 +134,7 @@ model.compile(optimizer=optimize,
 
 
 # Model training
-epochs=20
+epochs=50
 history = model.fit(
   train_ds,
   validation_data=validation_ds,
