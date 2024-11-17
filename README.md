@@ -1,12 +1,17 @@
 # ProjetTIP
-DeepLearning Project INSA Lyon
+## DeepLearning Project INSA Lyon
 
-import numpy as np
-import os
-import PIL
-import PIL.Image
-import tensorflow as tf
-import tensorflow_datasets as tfds
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
+Remttre l'intro du doc ici
+## test_v0.py
+- Python script of our model
+## Folder explanation
+- resied_archive/ 
+    - contains all the data we used
+- script_resize/ 
+  - contains python scripts we used to resized our data that we get from Kaggle  
+
+## Library used
+- numpy 
+- os
+- PIL
+- tensorflow 
