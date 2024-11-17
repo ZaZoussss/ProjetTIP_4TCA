@@ -76,7 +76,7 @@ num_classes = len(class_names) # number of classes
 model = Sequential([
   layers.Rescaling(1./255, input_shape=(images_height, images_width, 3)), # changing RGB values from [0, 255] to [0, 1], 3 channels (RGB)
   
-  layers.Conv2D(8, 3, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation='relu', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
+  layers.Conv2D(8, 3, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
   layers.BatchNormalization(),
   #layers.ReLU(),
   layers.MaxPooling2D(pool_size=(2, 2), strides=2),
@@ -84,7 +84,7 @@ model = Sequential([
   # Transformer la sortie 4D en 3D
   #layers.Reshape((-1, 16)),
 
-  layers.Conv2D(15, 5, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation='relu', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
+  layers.Conv2D(12, 5, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
   layers.BatchNormalization(),
   #layers.ReLU(),
   layers.MaxPooling2D(pool_size=(2, 2), strides=2),
