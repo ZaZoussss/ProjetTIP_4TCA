@@ -13,10 +13,8 @@ from tensorflow.keras.optimizers import Adam
 import pathlib
 
 # Set your images directories
-train_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive\Training Data\Training Data")
-validation_data_dir = pathlib.Path(r"L:\big_file_storage\4TCA_S1_TIP\animals_15_classes\resized_archive\Validation Data\Validation Data")
-# train_data_dir = pathlib.Path("./resized_archive_light/Training Data/Training Data")
-# validation_data_dir = pathlib.Path("./resized_archive_light/Validation Data/Validation Data")
+train_data_dir = pathlib.Path("./resized_archive/Training Data/Training Data")
+validation_data_dir = pathlib.Path("./resized_archive/Validation Data/Validation Data")
 
 # List all image files with .jpg, .jpeg, or .png extensions
 train_image_files = list(train_data_dir.glob('*/*.jpg')) + list(train_data_dir.glob('*/*.jpeg')) + list(train_data_dir.glob('*/*.png'))
@@ -31,7 +29,7 @@ images_width = 64
 # PIL.Image.open(str(cats[0]))
 # print(cats[0])
 
-batch_size = 50
+batch_size = 200
 v_batch_size = 20
 
 # Creating training dataset
@@ -78,7 +76,7 @@ num_classes = len(class_names) # number of classes
 model = Sequential([
   layers.Rescaling(1./255, input_shape=(images_height, images_width, 3)), # changing RGB values from [0, 255] to [0, 1]
   
-  layers.Conv2D(8, 3, padding='same', activation='relu'),
+  layers.Conv2D(30, 3, padding='same', activation='relu'),
   # layers.Conv2D(15, 3, padding='same', activation='relu'), # not that good
   # layers.Conv2D(16, 6, padding='same', activation='relu'), # really bad for validation
   layers.BatchNormalization(),
