@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import SGD
 
 
 import pathlib
@@ -29,7 +29,7 @@ images_width = 64
 # PIL.Image.open(str(cats[0]))
 # print(cats[0])
 
-batch_size = 200
+batch_size = 100
 v_batch_size = 20
 
 # Creating training dataset
@@ -65,7 +65,7 @@ print(class_names)
 # Configuring dataset for performance
 AUTOTUNE = tf.data.AUTOTUNE
 
-train_ds = train_ds.shuffle(batch_size*2).prefetch(buffer_size=AUTOTUNE)
+train_ds = train_ds.shuffle(batch_size*4).prefetch(buffer_size=AUTOTUNE)
 validation_ds = validation_ds.prefetch(buffer_size=AUTOTUNE)
 
 # train_ds = train_ds.batch(batch_size).cache(r"L:\big_file_storage\4TCA_S1_TIP\cache\train.cache").shuffle(1000).prefetch(buffer_size=AUTOTUNE)
@@ -74,40 +74,59 @@ validation_ds = validation_ds.prefetch(buffer_size=AUTOTUNE)
 # Creating the model
 num_classes = len(class_names) # number of classes
 model = Sequential([
-  layers.Rescaling(1./255, input_shape=(images_height, images_width, 3)), # changing RGB values from [0, 255] to [0, 1]
+  layers.Rescaling(1./255, input_shape=(images_height, images_width, 3)), # changing RGB values from [0, 255] to [0, 1], 3 channels (RGB)
   
-  layers.Conv2D(30, 3, padding='same', activation='relu'),
-  # layers.Conv2D(15, 3, padding='same', activation='relu'), # not that good
-  # layers.Conv2D(16, 6, padding='same', activation='relu'), # really bad for validation
+  layers.Conv2D(8, 3, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
   layers.BatchNormalization(),
-  layers.MaxPooling2D(pool_size=(2, 2), strides=2),
   layers.ReLU(),
-  layers.MaxPool2D(),
-
-  layers.Conv2D(16, 5, padding='same', activation='relu'),
-  #layers.Conv2D(16, 5, padding='same', activation='relu'),
-  layers.BatchNormalization(),
   layers.MaxPooling2D(pool_size=(2, 2), strides=2),
-  layers.ReLU(),
-  layers.MaxPool2D(),
 
   # Transformer la sortie 4D en 3D
-  layers.Reshape((-1, 16)),
+  #layers.Reshape((-1, 16)),
 
-  layers.SimpleRNN(units=100, recurrent_initializer='RandomNormal'),
+  layers.Conv2D(12, 4, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None),
+  layers.BatchNormalization(),
+  layers.ReLU(),
+  layers.MaxPooling2D(pool_size=(2, 2), strides=2),
+
+  # Transformer la sortie 4D en 3D
+  #layers.Reshape((-1, 16)),
+  
+  # layers.Conv2D(15, 3, padding='same', activation='relu'), # not that good
+  # layers.Conv2D(16, 6, padding='same', activation='relu'), # really bad for validation
+  # layers.BatchNormalization(),
+  # layers.MaxPooling2D(pool_size=(2, 2), strides=2),
+  # layers.ReLU(),
+  # layers.MaxPool2D(),
+
+  # layers.Conv2D(16, 5, padding='same', activation='relu'),
+  #layers.Conv2D(16, 5, padding='same', activation='relu'),
+  # layers.BatchNormalization(),
+  # layers.MaxPooling2D(pool_size=(2, 2), strides=2),
+  # layers.ReLU(),
+  # layers.MaxPool2D(),
+
+  # Transformer la sortie 4D en 3D
+  # layers.Reshape((-1, 16)),
+
+  # layers.SimpleRNN(units=100, recurrent_initializer='RandomNormal'),
   # layers.SimpleRNN(units=10),
-  layers.Softmax(),
+  # layers.Softmax(),
 
-  layers.Dense(128, activation='relu'),
-  layers.Dense(num_classes)
+  # layers.Dense(128, activation='relu'),
+  layers.Flatten(),
+  layers.Dense(128, activation="elu"),
+  layers.Dense(64, activation="elu"),
+  layers.Dense(32, activation="elu"),
+  layers.Dense(num_classes, activation="softmax")
 ])
 
 # Creating opimizer
-optimize = Adam(learning_rate=0.001)
+optimize = SGD(learning_rate=0.001)
 
 # Compiling model
 model.compile(optimizer=optimize,
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
               metrics=['accuracy'])
 
 # Model summary
