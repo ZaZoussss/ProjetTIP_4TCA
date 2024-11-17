@@ -17,6 +17,7 @@ import pathlib
 train_data_dir = pathlib.Path("./resized_archive/Training Data/Training Data")
 validation_data_dir = pathlib.Path("./resized_archive/Validation Data/Validation Data")
 
+
 # List all image files with .jpg, .jpeg, or .png extensions
 train_image_files = list(train_data_dir.glob('*/*.jpg')) + list(train_data_dir.glob('*/*.jpeg')) + list(train_data_dir.glob('*/*.png'))
 train_image_count = len(train_image_files)
@@ -30,7 +31,7 @@ images_width = 64
 # PIL.Image.open(str(cats[0]))
 # print(cats[0])
 
-batch_size = 300
+batch_size = 50
 v_batch_size = 100
 
 # Creating training dataset
@@ -74,18 +75,18 @@ validation_ds = validation_ds.prefetch(buffer_size=AUTOTUNE)
 num_classes = len(class_names) # number of classes
 model = Sequential([
     layers.Rescaling(1./255, input_shape=(images_height, images_width, 3)), # changing RGB values from [0, 255] to [0, 1]
-  
+
     layers.Conv2D(8, 3, padding='same'),
     layers.BatchNormalization(),
     layers.ReLU(),
     layers.MaxPooling2D(pool_size=(2, 2), strides=2),
 
-    layers.Conv2D(8, 5, padding='same'),
+    layers.Conv2D(4, 5, padding='same'),
     layers.BatchNormalization(),
     layers.ReLU(),
     layers.MaxPooling2D(pool_size=(2, 2), strides=2),
 
-    layers.Conv2D(12, 3, padding='same'),
+    layers.Conv2D(4, 4, padding='same'),
     layers.BatchNormalization(),
     layers.ReLU(),
     layers.MaxPooling2D(pool_size=(2, 2), strides=2),
