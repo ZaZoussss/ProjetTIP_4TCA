@@ -2,6 +2,8 @@
 .venv
 resized_archive_light/
 resized_archive/
+archive/
+original_archive/
 data/
 
 # files for the confusion matrix plot
