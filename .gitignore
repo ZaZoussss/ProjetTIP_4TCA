@@ -3,3 +3,7 @@
 resized_archive_light/
 resized_archive/
 data/
+
+# files for the confusion matrix plot
+class_names.npy
+conf_matrix.npy
