@@ -2,16 +2,16 @@ import tensorflow as tf
 from tensorflow.keras import layers, Sequential
 import pathlib
 import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, LearningRateScheduler
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
 # Définir les chemins des données
 train_data_dir = pathlib.Path("./resized_archive/Training Data/Training Data")
 validation_data_dir = pathlib.Path("./resized_archive/Validation Data/Validation Data")
 
 # Dimensions des images
-images_height = 256  # Taille des images
-images_width = 256   # Taille des images
-batch_size = 16
+images_height = 64
+images_width = 64
+batch_size = 64
 
 # Chargement des ensembles de données avec augmentation pour l'entraînement
 train_ds = tf.keras.utils.image_dataset_from_directory(
@@ -46,13 +46,16 @@ data_augmentation = Sequential([
     layers.RandomTranslation(0.2, 0.2),
 ])
 
-# Définition du modèle CNN plus profond
+# Définition du modèle CNN
 model = Sequential([
-    layers.InputLayer(input_shape=(images_height, images_width, 3)),
+    layers.InputLayer(input_shape=(images_height, images_width, 3)),  # Définition explicite de la forme d'entrée
     data_augmentation,  # Augmentation appliquée en temps réel
     layers.Rescaling(1./255),
     
-    # Couches convolutives avec plus de filtres et de profondeur
+    layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D((2, 2)),
+    
     layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
     layers.BatchNormalization(),
     layers.MaxPooling2D((2, 2)),
@@ -61,46 +64,22 @@ model = Sequential([
     layers.BatchNormalization(),
     layers.MaxPooling2D((2, 2)),
     
-    layers.Conv2D(256, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
-    layers.Conv2D(512, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
     layers.GlobalAveragePooling2D(),
     
-    # Couches denses avec un Dropout modéré
-    layers.Dense(1028, activation='relu'),
-    layers.Dropout(0.6),  # Dropout moins agressif
-    layers.Dense(num_classes, activation='softmax')  # Classification
+    layers.Dense(512, activation='relu'),
+    layers.Dropout(0.7),  # Dropout modéré pour plus d'apprentissage
+    layers.Dense(num_classes, activation='softmax')  # Classification en 15 classes
 ])
 
-# Compilation du modèle avec un taux d'apprentissage ajusté
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)  # Taux d'apprentissage plus bas
+# Compilation du modèle avec un taux d'apprentissage plus bas
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)  # Taux d'apprentissage plus bas pour plus de stabilité
 
-# Callback ReduceLROnPlateau pour ajuster le taux d'apprentissage plus agressivement
-reduce_lr = ReduceLROnPlateau(
-    monitor='val_loss', 
-    factor=0.4,  # Réduction plus agressive
-    patience=3,  # Ajustement plus rapide
-    min_lr=0.00001
-)
+# Callback ReduceLROnPlateau pour ajuster le taux d'apprentissage
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.00001)
 
-# Callback EarlyStopping pour stopper l'entraînement en cas de stagnation
+# Ajout d'EarlyStopping pour stopper l'entraînement en cas de stagnation
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
-# Définir un LearningRateScheduler pour ajuster dynamiquement le taux d'apprentissage
-def scheduler(epoch, lr):
-    if epoch < 5:
-        return lr  # Pas de changement pendant les 5 premières époques
-    else:
-        return lr * 0.8  # Réduit de 20% chaque 5 époques
-
-lr_scheduler = LearningRateScheduler(scheduler)
-
-# Compilation du modèle
 model.compile(
     optimizer=optimizer,
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
@@ -112,7 +91,7 @@ history = model.fit(
     train_ds,
     validation_data=validation_ds,
     epochs=50,
-    callbacks=[reduce_lr, early_stopping, lr_scheduler]
+    callbacks=[reduce_lr, early_stopping]
 )
 
 # Affichage des résultats
