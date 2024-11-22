@@ -69,14 +69,14 @@ model = Sequential([
     layers.Conv2D(8, 3, padding='same'),
     layers.BatchNormalization(),
     layers.ReLU(),
-    layers.MaxPooling2D(pool_size=(2, 2), strides=2),
-    layers.Conv2D(8, 5, padding='same'),
-    layers.BatchNormalization(),
-    layers.ReLU(),
-    layers.MaxPooling2D(pool_size=(2, 2), strides=2),
-    layers.Conv2D(12, 3, padding='same'),
-    layers.BatchNormalization(),
-    layers.ReLU(),
+    # layers.MaxPooling2D(pool_size=(2, 2), strides=2),
+    # layers.Conv2D(8, 5, padding='same'),
+    # layers.BatchNormalization(),
+    # layers.ReLU(),
+    # layers.MaxPooling2D(pool_size=(2, 2), strides=2),
+    # layers.Conv2D(12, 3, padding='same'),
+    # layers.BatchNormalization(),
+    # layers.ReLU(),
     layers.MaxPooling2D(pool_size=(2, 2), strides=2),
     # Transformer la sortie 4D en 3D
     layers.Flatten(),
@@ -139,3 +139,8 @@ disp.plot(cmap=plt.cm.Blues)
 plt.title("Matrice de Confusion")
 plt.xticks(rotation=45)
 plt.show()
+
+# Sauvegarder la matrice de confusion pour la load sur un environnement graphique
+np.save("conf_matrix", conf_matrix)
+np.save("class_names", class_names)
+
