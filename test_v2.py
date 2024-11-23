@@ -1,142 +1,170 @@
-import tensorflow as tf
-from tensorflow.keras import layers, Sequential
-import pathlib
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms, datasets
 import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, LearningRateScheduler
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
+import numpy as np
 
-# Définir les chemins des données
-train_data_dir = pathlib.Path("./resized_archive/Training Data/Training Data")
-validation_data_dir = pathlib.Path("./resized_archive/Validation Data/Validation Data")
+# Vérification de l'utilisation du GPU
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Device utilisé : {device}")
 
-# Dimensions des images
-images_height = 256  # Taille des images
-images_width = 256   # Taille des images
-batch_size = 16
+# Hyperparamètres
+img_size = (64, 64)
+batch_size = 32
+epochs = 5
+learning_rate = 0.0005
+num_classes = 4  # Nombre de classes (ajuste-le selon ton cas)
 
-# Chargement des ensembles de données avec augmentation pour l'entraînement
-train_ds = tf.keras.utils.image_dataset_from_directory(
-    train_data_dir,
-    image_size=(images_height, images_width),
-    batch_size=batch_size,
-    shuffle=True
-)
-
-validation_ds = tf.keras.utils.image_dataset_from_directory(
-    validation_data_dir,
-    image_size=(images_height, images_width),
-    batch_size=batch_size
-)
-
-# Récupération des noms des classes
-class_names = train_ds.class_names
-num_classes = len(class_names)
-print(f"Classes détectées : {class_names}")
-
-# Prétraitement des données pour performances
-AUTOTUNE = tf.data.AUTOTUNE
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-validation_ds = validation_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-# Augmentation des données
-data_augmentation = Sequential([
-    layers.RandomFlip("horizontal_and_vertical"),
-    layers.RandomRotation(0.2),
-    layers.RandomZoom(0.2),
-    layers.RandomContrast(0.2),
-    layers.RandomTranslation(0.2, 0.2),
+# Transforms pour la préparation des données
+transform = transforms.Compose([
+    transforms.Resize(img_size),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Définition du modèle CNN plus profond
-model = Sequential([
-    layers.InputLayer(input_shape=(images_height, images_width, 3)),
-    data_augmentation,  # Augmentation appliquée en temps réel
-    layers.Rescaling(1./255),
-    
-    # Couches convolutives avec plus de filtres et de profondeur
-    layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
-    layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
-    layers.Conv2D(256, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
-    layers.Conv2D(512, (3, 3), activation='relu', padding='same'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D((2, 2)),
-    
-    layers.GlobalAveragePooling2D(),
-    
-    # Couches denses avec un Dropout modéré
-    layers.Dense(1028, activation='relu'),
-    layers.Dropout(0.6),  # Dropout moins agressif
-    layers.Dense(num_classes, activation='softmax')  # Classification
-])
+# Chargement des données
+train_dir = "./resized_archive copie/Training Data/Training Data"
+validation_dir = "./resized_archive copie/Validation Data/Validation Data"
 
-# Compilation du modèle avec un taux d'apprentissage ajusté
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)  # Taux d'apprentissage plus bas
+train_data = datasets.ImageFolder(train_dir, transform=transform)
+val_data = datasets.ImageFolder(validation_dir, transform=transform)
 
-# Callback ReduceLROnPlateau pour ajuster le taux d'apprentissage plus agressivement
-reduce_lr = ReduceLROnPlateau(
-    monitor='val_loss', 
-    factor=0.4,  # Réduction plus agressive
-    patience=3,  # Ajustement plus rapide
-    min_lr=0.00001
-)
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
 
-# Callback EarlyStopping pour stopper l'entraînement en cas de stagnation
-early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+# Définition du modèle CNN
+class CNNModel(nn.Module):
+    def __init__(self):
+        super(CNNModel, self).__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.fc1 = nn.Linear(128 * 8 * 8, 128)  # Assuming 64x64 input
+        self.fc2 = nn.Linear(128, num_classes)  # Multi-class output
 
-# Définir un LearningRateScheduler pour ajuster dynamiquement le taux d'apprentissage
-def scheduler(epoch, lr):
-    if epoch < 5:
-        return lr  # Pas de changement pendant les 5 premières époques
-    else:
-        return lr * 0.8  # Réduit de 20% chaque 5 époques
+    def forward(self, x):
+        x = self.pool(torch.relu(self.conv1(x)))
+        x = self.pool(torch.relu(self.conv2(x)))
+        x = self.pool(torch.relu(self.conv3(x)))
+        x = x.view(-1, 128 * 8 * 8)  # Flatten
+        x = torch.relu(self.fc1(x))
+        x = self.fc2(x)  # Pas de sigmoid ici, CrossEntropyLoss s'en occupe
+        return x
 
-lr_scheduler = LearningRateScheduler(scheduler)
+# Initialisation du modèle
+model = CNNModel().to(device)
 
-# Compilation du modèle
-model.compile(
-    optimizer=optimizer,
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
-    metrics=['accuracy']
-)
+# Définition du critère de perte et de l'optimiseur
+criterion = nn.CrossEntropyLoss()  # Pour multi-class
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-# Entraînement avec callbacks
-history = model.fit(
-    train_ds,
-    validation_data=validation_ds,
-    epochs=50,
-    callbacks=[reduce_lr, early_stopping, lr_scheduler]
-)
+# Fonction d'entraînement
+def train(model, train_loader, criterion, optimizer, epochs):
+    model.train()
+    train_losses = []
+    train_accuracies = []
+    val_accuracies = []
 
-# Affichage des résultats
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+    for epoch in range(epochs):
+        running_loss = 0.0
+        correct_preds = 0
+        total_preds = 0
 
-epochs_range = range(len(acc))
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
 
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)  # Pas besoin de view(-1)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+
+            # Calcul de la précision
+            _, predicted = torch.max(outputs, 1)
+            correct_preds += (predicted == labels).sum().item()
+            total_preds += labels.size(0)
+
+        avg_loss = running_loss / len(train_loader)
+        avg_accuracy = correct_preds / total_preds
+
+        # Calcul de l'accuracy sur le set de validation
+        val_accuracy, val_labels, val_preds = validate(model, val_loader)
+
+        # Sauvegarder les pertes et les précisions
+        train_losses.append(avg_loss)
+        train_accuracies.append(avg_accuracy)
+        val_accuracies.append(val_accuracy)
+
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}, Train Accuracy: {avg_accuracy:.4f}, Validation Accuracy: {val_accuracy:.4f}")
+
+    return train_losses, train_accuracies, val_accuracies, val_labels, val_preds
+
+# Fonction de validation
+def validate(model, val_loader):
+    model.eval()
+    all_labels = []
+    all_preds = []
+    correct_preds = 0
+    total_preds = 0
+
+    with torch.no_grad():
+        for inputs, labels in val_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+
+            _, predicted = torch.max(outputs, 1)
+            correct_preds += (predicted == labels).sum().item()
+            total_preds += labels.size(0)
+
+            all_labels.extend(labels.cpu().numpy())
+            all_preds.extend(predicted.cpu().numpy())
+
+    accuracy = correct_preds / total_preds
+    return accuracy, np.array(all_labels), np.array(all_preds)
+
+# Entraînement du modèle
+train_losses, train_accuracies, val_accuracies, val_labels, val_preds = train(model, train_loader, criterion, optimizer, epochs)
+
+# Matrice de confusion
+cm = confusion_matrix(val_labels, val_preds)
+
+# Affichage de la matrice de confusion
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=train_data.classes, yticklabels=train_data.classes)
+plt.title("Matrice de confusion")
+plt.xlabel("Prédictions")
+plt.ylabel("Vérités")
+plt.show()
+
+# Affichage du rapport de classification
+print("Classification Report:")
+print(classification_report(val_labels, val_preds))
+
+# Visualisation des courbes de perte et d'accuracy
 plt.figure(figsize=(12, 6))
 
-# Accuracy
+# Courbe de perte
 plt.subplot(1, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training and Validation Accuracy')
+plt.plot(train_losses, label='Train Loss')
+plt.title('Courbe de perte')
+plt.xlabel('Époques')
+plt.ylabel('Perte')
+plt.legend()
 
-# Loss
+# Courbe de précision (train et validation)
 plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
+plt.plot(train_accuracies, label='Train Accuracy')
+plt.plot(val_accuracies, label='Validation Accuracy')
+plt.title('Courbe de précision')
+plt.xlabel('Époques')
+plt.ylabel('Précision')
+plt.legend()
 
 plt.show()

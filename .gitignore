@@ -5,6 +5,7 @@ resized_archive/
 archive/
 original_archive/
 data/
+resized_archive copie/
 
 # files for the confusion matrix plot
 class_names.npy
