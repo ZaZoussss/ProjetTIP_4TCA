@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers import Adam
 
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
@@ -28,7 +28,7 @@ images_height = 64
 images_width = 64
 
 # Classes que vous souhaitez conserver
-selected_classes = ['Beetle', 'Butterfly', 'Cat', 'Cow', 'Dog']
+selected_classes = ['Beetle','Panda']
 # cats = list(data_dir.glob('Cat/*'))
 # PIL.Image.open(str(cats[0]))
 # print(cats[0])
@@ -75,7 +75,7 @@ print(validation_ds.class_names)
 # Configuring dataset for performance
 AUTOTUNE = tf.data.AUTOTUNE
 
-train_ds = train_ds.shuffle(batch_size * 4).prefetch(buffer_size=AUTOTUNE)
+train_ds = train_ds.shuffle(1000).prefetch(buffer_size=AUTOTUNE)
 validation_ds = validation_ds.prefetch(buffer_size=AUTOTUNE)
 
 # train_ds = train_ds.batch(batch_size).cache(r"L:\big_file_storage\4TCA_S1_TIP\cache\train.cache").shuffle(1000).prefetch(buffer_size=AUTOTUNE)
@@ -98,7 +98,7 @@ model = Sequential([
     # Transformer la sortie 4D en 3D
     # layers.Reshape((-1, 16)),
 
-    layers.Conv2D(12, 5, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1,
+    layers.Conv2D(10, 5, strides=(1, 1), padding='same', data_format=None, dilation_rate=(1, 1), groups=1,
                   activation='elu', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros',
                   kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
                   bias_constraint=None),
@@ -133,13 +133,14 @@ model = Sequential([
     # layers.Dense(128, activation='relu'),
     layers.Flatten(),
     # layers.Dense(128, activation="elu"),
+    #layers.Dense(64, activation="elu"),
     layers.Dense(64, activation="elu"),
-    layers.Dense(32, activation="elu"),
+    layers.Dropout(0.2),
     layers.Dense(num_classes, activation="softmax")
 ])
 
 # Creating opimizer
-optimize = SGD(learning_rate=0.001)
+optimize = Adam(learning_rate=0.001)
 
 # Compiling model
 model.compile(optimizer=optimize,
@@ -151,7 +152,7 @@ model.compile(optimizer=optimize,
 
 
 # Model training
-epochs = 50
+epochs = 10
 history = model.fit(
     train_ds,
     validation_data=validation_ds,

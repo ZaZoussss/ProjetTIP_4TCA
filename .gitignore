@@ -10,3 +10,4 @@ resized_archive copie/
 # files for the confusion matrix plot
 class_names.npy
 conf_matrix.npy
+/aMettreDansLeRapport
