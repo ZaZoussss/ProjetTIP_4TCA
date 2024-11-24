@@ -1,5 +1,6 @@
 .idea/
 .venv
+.DS_Store
 resized_archive_light/
 resized_archive/
 archive/
