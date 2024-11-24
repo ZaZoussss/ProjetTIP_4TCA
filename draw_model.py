@@ -6,17 +6,21 @@ def plot_neural_network():
 
     # Define the layers and their respective sizes
     layers = {
-        "Input": 3,  # Input image channels
-        "Conv1": 32, # First convolution layer
-        "BatchNorm1": 32,
-        "Conv2": 64, # Second convolution layer
-        "BatchNorm2": 64,
-        "Conv3": 128, # Third convolution layer
-        "BatchNorm3": 128,
-        "Flatten": 128 * 8 * 8,  # Flatten the image for fully connected layers
-        "FC1": 128, # Fully connected layer 1
-        "Dropout": 128, # Dropout applied
-        "FC2": 15  # Final output layer
+        "Input": 3,               # Input layer with 3 channels (RGB)
+        "Conv1": 32,              # First convolution layer
+        "BatchNorm1": 32,         # Batch normalization after Conv1
+        "Conv2": 64,              # Second convolution layer
+        "BatchNorm2": 64,         # Batch normalization after Conv2
+        "Conv3": 128,             # Third convolution layer
+        "BatchNorm3": 128,        # Batch normalization after Conv3
+        "Conv4": 256,             # Fourth convolution layer (new)
+        "BatchNorm4": 256,        # Batch normalization after Conv4
+        "Conv5": 512,             # Fifth convolution layer (new)
+        "BatchNorm5": 512,        # Batch normalization after Conv5
+        "Flatten": 512 * 2 * 2,   # Flatten for fully connected layers
+        "FC1": 256,               # Fully connected layer 1
+        "Dropout": 256,           # Dropout applied (10%)
+        "FC2": 15     # Final output layer
     }
 
     # Create nodes for each layer
